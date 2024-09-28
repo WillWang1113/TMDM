@@ -26,12 +26,12 @@ class ConditionalGuidedModel(nn.Module):
         n_steps = config.diffusion.timesteps + 1
         self.cat_x = config.model.cat_x
         self.cat_y_pred = config.model.cat_y_pred
-        data_dim = 14
+        data_dim = MTS_args.enc_in * 2
 
         self.lin1 = ConditionalLinear(data_dim, 128, n_steps)
         self.lin2 = ConditionalLinear(128, 128, n_steps)
         self.lin3 = ConditionalLinear(128, 128, n_steps)
-        self.lin4 = nn.Linear(128, 7)
+        self.lin4 = nn.Linear(128, MTS_args.c_out)
 
     def forward(self, x, y_t, y_0_hat, t):
         if self.cat_x:

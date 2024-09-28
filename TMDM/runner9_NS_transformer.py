@@ -3,24 +3,24 @@ import torch
 from model9_NS_transformer.exp.exp_main import Exp_Main
 import random
 import numpy as np
-import setproctitle
+# import setproctitle
 
 if __name__ == '__main__':
-    setproctitle.setproctitle('LYX_thread')
+    # setproctitle.setproctitle('LYX_thread')
 
     parser = argparse.ArgumentParser(description='Non-stationary Transformers for Time Series Forecasting')
 
     # basic config
     parser.add_argument('--is_training', type=bool, default=True, help='status')
-    parser.add_argument('--model_id', type=str, default='ETTh2_96_192', help='model id')
-    parser.add_argument('--model', type=str, default='ETTh2_96_192',
+    parser.add_argument('--model_id', type=str, default='', help='model id')
+    parser.add_argument('--model', type=str, default='ns_Transformer',
                         help='model name, options: [ns_Transformer, Transformer]')
 
     # data loader
     parser.add_argument('--data', type=str, default='custom', help='dataset type')
-    parser.add_argument('--root_path', type=str, default='./dataset/ETT-small/', help='root path of the data file')
+    parser.add_argument('--root_path', type=str, default='/home/user/data/THU-timeseries', help='root path of the data file')
     parser.add_argument('--data_path', type=str, default='ETTh2.csv', help='data file')
-    parser.add_argument('--features', type=str, default='M',
+    parser.add_argument('--features', type=str, default='S',
                         help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate')
     parser.add_argument('--target', type=str, default='OT', help='target feature in S or MS task')
     parser.add_argument('--freq', type=str, default='h',
@@ -33,9 +33,9 @@ if __name__ == '__main__':
     parser.add_argument('--pred_len', type=int, default=192, help='prediction sequence length')
 
     # model define
-    parser.add_argument('--enc_in', type=int, default=7, help='encoder input size')
-    parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
-    parser.add_argument('--c_out', type=int, default=7, help='output size')
+    parser.add_argument('--enc_in', type=int, default=1, help='encoder input size')
+    parser.add_argument('--dec_in', type=int, default=1, help='decoder input size')
+    parser.add_argument('--c_out', type=int, default=1, help='output size')
     parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
     parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
@@ -59,11 +59,11 @@ if __name__ == '__main__':
 
 
     # optimization
-    parser.add_argument('--num_workers', type=int, default=4, help='data loader num workers')
-    parser.add_argument('--itr', type=int, default=1, help='experiments times')
+    parser.add_argument('--num_workers', type=int, default=0, help='data loader num workers')
+    parser.add_argument('--itr', type=int, default=5, help='experiments times')
     parser.add_argument('--train_epochs', type=int, default=200, help='train epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size of train input data')  # 32
-    parser.add_argument('--test_batch_size', type=int, default=8, help='batch size of train input data')  # 32
+    parser.add_argument('--test_batch_size', type=int, default=16, help='batch size of train input data')  # 32
     parser.add_argument('--patience', type=int, default=15, help='early stopping patience')
     parser.add_argument('--learning_rate', type=float, default=0.0001, help='optimizer learning rate for diffusion model')
     parser.add_argument('--learning_rate_Cond', type=float, default=0.0001, help='optimizer learning rate')
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     parser.add_argument('--MLP_diffusion_net', type=bool, default=False, help='use MLP or Unet')
 
     # Some args for Ax (all about diffusion part)
-    parser.add_argument('--timesteps', type=int, default=1000, help='')
+    parser.add_argument('--timesteps', type=int, default=100, help='')
 
 
 
@@ -107,16 +107,7 @@ if __name__ == '__main__':
 
     args.use_gpu = True if torch.cuda.is_available() and args.use_gpu else False
 
-    if args.seed == -1:
-        fix_seed = np.random.randint(2147483647)
-    else:
-        fix_seed = args.seed
 
-    print('Using seed:', fix_seed)
-
-    random.seed(fix_seed)
-    torch.manual_seed(fix_seed)
-    np.random.seed(fix_seed)
 
     if args.use_gpu:
         if args.use_multi_gpu:
@@ -134,6 +125,16 @@ if __name__ == '__main__':
 
     if args.is_training:
         for ii in range(args.itr):
+            if args.seed == -1:
+                fix_seed = np.random.randint(2147483647)
+            else:
+                fix_seed = ii
+
+            print('Using seed:', fix_seed)
+
+            random.seed(fix_seed)
+            torch.manual_seed(fix_seed)
+            np.random.seed(fix_seed)
             # setting record of experiments
             setting = '{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
                 args.model_id,
